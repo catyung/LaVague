@@ -49,11 +49,11 @@ Standardized instruction: [{'query':'button"Installation"', 'action':'Click on "
 
 Text instruction:  Locate the input element labeled "Email Address" and type in "example@example.com". Locate the input element labeled "First name" and type in "John". Locate the input element labeled "Last name" and type in "Doe". Locate the input element labeled "Phone" and type in "555-555-5555".
 Standardized instruction: [{'query':'input"Email Address"', 'action':'Click on the input "Email Address" and type "example@example.com"'}, {'query':'input"First name"', 'action':'Click on the input "First name" and type "John"'}, {'query':'input"Last name"', 'action':'Click on the input "Last name" and type "Doe"'}, {'query':'input"Phone"', 'action':'Click on the input "Phone" and type "555-555-5555"'}]
-Text instruction: In the login form, locate the input element labeled “Username” and type “user123”. Locate the input element labeled “Password” and type “pass456”.
-Standardized instruction: [{'query':'input”Username”', 'action':'Click on the input “Username” and type “user123”'}, {'query':'input”Password”', 'action':'Click on the input “Password” and type “pass456”'}]
+Text instruction: In the login form, locate the input element labeled "Username" and type "user123". Locate the input element labeled “Password” and type "pass456".
+Standardized instruction: [{'query':'input"Username"', 'action':'Click on the input "Username" and type "user123"'}, {'query':'input"Password"', 'action':'Click on the input "Password" and type "pass456"'}]
 
-Text instruction: Press the button labeled “Submit” at the bottom of the form.
-Standardized instruction: [{'query':'button”Submit”', 'action':'Click on the button “Submit”'}]
+Text instruction: Press the button labeled "Submit" at the bottom of the form.
+Standardized instruction: [{'query':'button"Submit"', 'action':'Click on the button "Submit"'}]
 
 Text instruction: ${instruction}
 Standardized instruction:
@@ -86,11 +86,12 @@ class Rephraser:
             `List[dict]`: The rephrased query as a list of dictionaries
         """
         rephrase_prompt = self.prompt.safe_substitute(instruction=query)
+        self.llm.max_new_tokens = 128
         response = self.llm.complete(rephrase_prompt).text
         response = response.strip("```json\n").strip("\n``` \n")
+        response = response.split('\n')[0]
         rephrased_query = extract_and_eval(response)
         return rephrased_query
-
 
 class NavigationEngine(BaseEngine):
     """
@@ -236,11 +237,10 @@ class NavigationEngine(BaseEngine):
         navigation_log_total = []
 
         for action in list_instructions:
-            logging_print.debug("query for retriever: " + action["query"])
             logging_print.debug("Rephrased instruction: " + action["action"])
             instruction = action["action"]
             start = time.time()
-            source_nodes = self.get_nodes(action["query"])
+            source_nodes = self.get_nodes(instruction)
             end = time.time()
             retrieval_time = end - start
 
